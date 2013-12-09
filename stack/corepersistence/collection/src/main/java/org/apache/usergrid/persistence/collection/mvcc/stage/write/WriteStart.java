@@ -13,6 +13,7 @@ import org.apache.usergrid.persistence.collection.mvcc.entity.MvccLogEntry;
 import org.apache.usergrid.persistence.collection.mvcc.entity.impl.MvccEntityImpl;
 import org.apache.usergrid.persistence.collection.mvcc.entity.impl.MvccLogEntryImpl;
 import org.apache.usergrid.persistence.collection.mvcc.stage.IoEvent;
+import org.apache.usergrid.persistence.collection.rx.Astyanax;
 import org.apache.usergrid.persistence.collection.serialization.MvccLogEntrySerializationStrategy;
 import org.apache.usergrid.persistence.collection.util.EntityUtils;
 import org.apache.usergrid.persistence.model.entity.Entity;
@@ -66,20 +67,10 @@ public class WriteStart implements Func1<IoEvent<Entity>, Observable<IoEvent<Mvc
 
             MutationBatch write = logStrategy.write( entityCollection, startEntry );
 
-
-            try {
-                write.execute();
-            }
-            catch ( ConnectionException e ) {
-                LOG.error( "Failed to execute write asynchronously ", e );
-                throw new CollectionRuntimeException( "Failed to execute write asynchronously ", e );
-            }
-
-
             //create the mvcc entity for the next stage
             final MvccEntityImpl nextStage = new MvccEntityImpl( entityId, version, entity );
 
-            return Observable.from( new IoEvent<MvccEntity>( entityCollection, nextStage ) );
+            return Astyanax.insertMutation(write, new IoEvent<MvccEntity>( entityCollection, nextStage ) );
         }
     }
 }

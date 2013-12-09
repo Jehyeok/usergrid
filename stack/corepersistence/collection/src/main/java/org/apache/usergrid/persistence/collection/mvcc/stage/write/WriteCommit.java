@@ -12,6 +12,7 @@ import org.apache.usergrid.persistence.collection.mvcc.entity.MvccEntity;
 import org.apache.usergrid.persistence.collection.mvcc.entity.MvccLogEntry;
 import org.apache.usergrid.persistence.collection.mvcc.entity.impl.MvccLogEntryImpl;
 import org.apache.usergrid.persistence.collection.mvcc.stage.IoEvent;
+import org.apache.usergrid.persistence.collection.rx.Astyanax;
 import org.apache.usergrid.persistence.collection.serialization.MvccEntitySerializationStrategy;
 import org.apache.usergrid.persistence.collection.serialization.MvccLogEntrySerializationStrategy;
 import org.apache.usergrid.persistence.collection.util.EntityUtils;
@@ -77,15 +78,6 @@ public class WriteCommit implements Func1<IoEvent<MvccEntity>, Observable<Entity
         logMutation.mergeShallow( entityMutation );
 
 
-        try {
-            //TODO Async execution
-            logMutation.execute();
-        }
-        catch ( ConnectionException e ) {
-            LOG.error( "Failed to execute write asynchronously ", e );
-            throw new CollectionRuntimeException( "Failed to execute write asynchronously ", e );
-        }
-
-        return Observable.from( entity.getEntity().get() );
+        return Astyanax.insertMutation(entityMutation, entity.getEntity().get());
     }
 }

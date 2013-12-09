@@ -11,10 +11,23 @@ import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
+import rx.util.functions.Func1;
 
 
 /** @author tnine */
 public class Astyanax {
+
+
+    public static <T, R> Observable<R> insertMutation(final Execution<T> ex, final R val){
+        return executeAsync( ex ).map( new Func1<OperationResult<T>, R>() {
+            @Override
+            public R call( final OperationResult<T> tOperationResult ) {
+                return val;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        } );
+
+    }
+
     public static <R> Observable<OperationResult<R>> executeAsync( final Execution<R> execution ) {
         return Observable.create( new Observable.OnSubscribeFunc<OperationResult<R>>() {
 
